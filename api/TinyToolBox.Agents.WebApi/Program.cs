@@ -4,6 +4,7 @@ using Microsoft.Extensions.AI;
 using OllamaSharp;
 using TinyToolBox.Agents.Shared.Http;
 using TinyToolBox.Agents.Shared.Json;
+using TinyToolBox.Agents.WebApi;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.ConfigureHttpJsonOptions(options => { options.SerializerOptions.Setup(); });
@@ -22,7 +23,7 @@ builder.Services.AddTransient<IChatClient>(provider =>
     var factory = provider.GetRequiredService<IHttpClientFactory>();
     var httpClient = factory.CreateClient(nameof(OllamaApiClient));
     var ollamaApiClient = new OllamaApiClient(httpClient, "phi4");
-    return ollamaApiClient;
+    return new OllamaChatClient(ollamaApiClient);
 });
 
 // AI Agent

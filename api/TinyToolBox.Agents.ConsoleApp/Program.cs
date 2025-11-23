@@ -71,9 +71,8 @@ try
         var isFirstUpdate = true;
         string? threadId = null;
         var updates = new List<ChatResponseUpdate>();
-        await foreach (var update in agent.RunStreamingAsync(messages,
-                           thread,
-                           cancellationToken: lifetime.ApplicationStopping))
+        await foreach (var update in agent.
+                           RunStreamingAsync(messages, thread, cancellationToken: lifetime.ApplicationStopping))
         {
             // Use AsChatResponseUpdate to access ChatResponseUpdate properties
             var chatUpdate = update.AsChatResponseUpdate();
