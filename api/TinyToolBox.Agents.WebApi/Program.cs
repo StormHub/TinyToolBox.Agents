@@ -1,26 +1,28 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
+﻿using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Hosting.AGUI.AspNetCore;
 using Microsoft.Extensions.AI;
 using OllamaSharp;
+using TinyToolBox.Agents.Shared.Http;
+using TinyToolBox.Agents.Shared.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
-    options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-    options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-    options.SerializerOptions.NumberHandling = JsonNumberHandling.AllowReadingFromString;
-    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    options.SerializerOptions.Setup();
 });
 builder.Services.AddAGUI();
 
-var httpClientBuilder = builder.Services
+// Http client
+builder.Services.AddTransient<TraceHttpHandler>();
+builder.Services
     .AddHttpClient(nameof(OllamaApiClient))
+    .AddHttpMessageHandler<TraceHttpHandler>()
     .ConfigureHttpClient(client =>
-{
-    client.BaseAddress = new Uri("http://localhost:11434");
-});
-httpClientBuilder.Services.AddLogging();
+    {
+        client.BaseAddress = new Uri("http://localhost:11434");
+    });
+
+// Ollama
 builder.Services.AddTransient<IChatClient>(provider =>
 {
     var factory = provider.GetRequiredService<IHttpClientFactory>();
@@ -29,12 +31,29 @@ builder.Services.AddTransient<IChatClient>(provider =>
     return ollamaApiClient;
 });
 
+// AI Agent
+builder.Services.AddKeyedTransient<ChatClientAgent>(
+    "local-ollama-agent", 
+    (provider, key) =>
+    {
+        var agentOption = new ChatClientAgentOptions
+        {
+            Id = key.ToString(),
+            Name = "Local Assistant",
+            Description = "An AI agent on local Ollama.",
+            ChatOptions = new ChatOptions
+            {
+                Temperature = 0
+            }
+        };
+    
+    var agent = provider.GetRequiredService<IChatClient>()
+        .CreateAIAgent(agentOption, provider.GetRequiredService<ILoggerFactory>());
+    return agent;
+});
 var app = builder.Build();
 
-var chatClient = app.Services.GetRequiredService<IChatClient>();
-var agent = chatClient.CreateAIAgent(
-    name: "Local Assistant", 
-    description: "An AI agent on local Ollama.");
-
+var agent = app.Services.GetRequiredKeyedService<ChatClientAgent>("local-ollama-agent");
 app.MapAGUI("/", agent);
+
 await app.RunAsync();
