@@ -14,4 +14,8 @@
       <PackageReference Include="OllamaSharp" Version="5.4.11" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\TinyToolBox.Agents.Shared\TinyToolBox.Agents.Shared.csproj" />
+    </ItemGroup>
+
 </Project>
