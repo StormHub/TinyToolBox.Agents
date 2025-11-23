@@ -22,3 +22,9 @@ body,
 html {
   height: 100%;
 }
+
+/* hide "Powered by CopilotKit" watermark */
+p.poweredBy {
+  display: none !important;
+  visibility: hidden !important;
+}
