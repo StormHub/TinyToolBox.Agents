@@ -405,3 +405,6 @@ FodyWeavers.xsd
 .idea/dataSources/
 .idea/dataSources.local.xml
 .idea/*.iml
+
+# macOs
+**/.DS_Store
