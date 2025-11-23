@@ -18,20 +18,20 @@ try
             services.AddTransient<TraceHttpHandler>();
             services.AddHttpClient("local")
                 .AddHttpMessageHandler<TraceHttpHandler>();
-            
+
             services.AddTransient<AIAgent>(provider =>
             {
                 var factory = provider.GetRequiredService<IHttpClientFactory>();
                 var httpClient = factory.CreateClient("local");
                 var jsonSerializerOptions = new JsonSerializerOptions();
                 jsonSerializerOptions.Setup();
-                
+
                 var chatClient = new AGUIChatClient(
                     httpClient,
                     "http://localhost:5000",
                     provider.GetRequiredService<ILoggerFactory>(),
                     jsonSerializerOptions);
-                
+
                 var agent = chatClient.CreateAIAgent(
                     name: "local-client",
                     description: "AG-UI Client Agent");
@@ -71,17 +71,15 @@ try
         var isFirstUpdate = true;
         string? threadId = null;
         var updates = new List<ChatResponseUpdate>();
-        await foreach (var update in agent.RunStreamingAsync(messages, thread,
+        await foreach (var update in agent.RunStreamingAsync(messages,
+                           thread,
                            cancellationToken: lifetime.ApplicationStopping))
         {
             // Use AsChatResponseUpdate to access ChatResponseUpdate properties
             var chatUpdate = update.AsChatResponseUpdate();
             updates.Add(chatUpdate);
-            if (chatUpdate.ConversationId != null)
-            {
-                threadId = chatUpdate.ConversationId;
-            }
-            
+            if (chatUpdate.ConversationId != null) threadId = chatUpdate.ConversationId;
+
             // Display run started information from the first update
             if (isFirstUpdate && threadId != null && update.ResponseId != null)
             {
@@ -90,10 +88,9 @@ try
                 Console.ResetColor();
                 isFirstUpdate = false;
             }
-            
+
             // Display different content types with appropriate formatting
             foreach (var content in update.Contents)
-            {
                 switch (content)
                 {
                     case TextContent textContent:
@@ -104,8 +101,10 @@ try
 
                     case FunctionCallContent functionCallContent:
                         Console.ForegroundColor = ConsoleColor.Green;
-                        var arguments = functionCallContent.Arguments?.Select(x => $"Name: {x.Key} \n Value: {x.Value}") ?? [];
-                        Console.WriteLine($"\n[Function Call - Name: {functionCallContent.Name}, Arguments: {string.Join('\n', arguments)}]");
+                        var arguments =
+                            functionCallContent.Arguments?.Select(x => $"Name: {x.Key} \n Value: {x.Value}") ?? [];
+                        Console.WriteLine(
+                            $"\n[Function Call - Name: {functionCallContent.Name}, Arguments: {string.Join('\n', arguments)}]");
                         Console.ResetColor();
                         break;
 
@@ -124,8 +123,8 @@ try
                         Console.ResetColor();
                         break;
                 }
-            }
         }
+
         if (updates.Count > 0 && !updates[^1].Contents.Any(c => c is TextContent))
         {
             var lastUpdate = updates[^1];
@@ -134,8 +133,9 @@ try
             Console.WriteLine($"[Run Ended - Thread: {threadId}, Run: {lastUpdate.ResponseId}]");
             Console.ResetColor();
         }
+
         messages.Clear();
-        Console.WriteLine();        
+        Console.WriteLine();
     }
 
     await host.WaitForShutdownAsync(lifetime.ApplicationStopping);

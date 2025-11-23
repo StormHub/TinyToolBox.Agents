@@ -6,10 +6,7 @@ using TinyToolBox.Agents.Shared.Http;
 using TinyToolBox.Agents.Shared.Json;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.ConfigureHttpJsonOptions(options =>
-{
-    options.SerializerOptions.Setup();
-});
+builder.Services.ConfigureHttpJsonOptions(options => { options.SerializerOptions.Setup(); });
 builder.Services.AddAGUI();
 
 // Http client
@@ -17,10 +14,7 @@ builder.Services.AddTransient<TraceHttpHandler>();
 builder.Services
     .AddHttpClient(nameof(OllamaApiClient))
     .AddHttpMessageHandler<TraceHttpHandler>()
-    .ConfigureHttpClient(client =>
-    {
-        client.BaseAddress = new Uri("http://localhost:11434");
-    });
+    .ConfigureHttpClient(client => { client.BaseAddress = new Uri("http://localhost:11434"); });
 
 // Ollama
 builder.Services.AddTransient<IChatClient>(provider =>
@@ -33,7 +27,7 @@ builder.Services.AddTransient<IChatClient>(provider =>
 
 // AI Agent
 builder.Services.AddKeyedTransient<ChatClientAgent>(
-    "local-ollama-agent", 
+    "local-ollama-agent",
     (provider, key) =>
     {
         var agentOption = new ChatClientAgentOptions
@@ -46,11 +40,11 @@ builder.Services.AddKeyedTransient<ChatClientAgent>(
                 Temperature = 0
             }
         };
-    
-    var agent = provider.GetRequiredService<IChatClient>()
-        .CreateAIAgent(agentOption, provider.GetRequiredService<ILoggerFactory>());
-    return agent;
-});
+
+        var agent = provider.GetRequiredService<IChatClient>()
+            .CreateAIAgent(agentOption, provider.GetRequiredService<ILoggerFactory>());
+        return agent;
+    });
 var app = builder.Build();
 
 var agent = app.Services.GetRequiredKeyedService<ChatClientAgent>("local-ollama-agent");
