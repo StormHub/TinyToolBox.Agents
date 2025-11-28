@@ -12,10 +12,7 @@ internal sealed class OllamaChatClient(OllamaApiClient ollamaApiClient) : IChatC
         CancellationToken cancellationToken = default)
     {
         var response = await ((IChatClient)ollamaApiClient).GetResponseAsync(messages, options, cancellationToken);
-        foreach (var chatMessage in response.Messages)
-        {
-            chatMessage.MessageId ??= Guid.NewGuid().ToString();
-        }
+        foreach (var chatMessage in response.Messages) chatMessage.MessageId ??= Guid.NewGuid().ToString();
 
         return response;
     }
@@ -35,8 +32,13 @@ internal sealed class OllamaChatClient(OllamaApiClient ollamaApiClient) : IChatC
         }
     }
 
-    public object? GetService(Type serviceType, object? serviceKey = null) => 
-        ((IChatClient)ollamaApiClient).GetService(serviceType, serviceKey);
+    public object? GetService(Type serviceType, object? serviceKey = null)
+    {
+        return ((IChatClient)ollamaApiClient).GetService(serviceType, serviceKey);
+    }
 
-    public void Dispose() => ollamaApiClient.Dispose();
+    public void Dispose()
+    {
+        ollamaApiClient.Dispose();
+    }
 }

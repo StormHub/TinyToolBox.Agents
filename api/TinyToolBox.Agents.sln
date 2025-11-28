@@ -6,6 +6,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TinyToolBox.Agents.ConsoleA
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TinyToolBox.Agents.Shared", "TinyToolBox.Agents.Shared\TinyToolBox.Agents.Shared.csproj", "{90BBA7EE-674B-417F-9886-EC9B46444847}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TinyToolBox.Agents.Reasoning", "TinyToolBox.Agents.Reasoning\TinyToolBox.Agents.Reasoning.csproj", "{20AA3B39-9107-47D8-842E-99B486806534}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AGUI", "AGUI", "{738391C4-A4D4-48DF-B693-8B215AE6B5E7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ReAct", "ReAct", "{2C4CCFC6-51F7-4505-AC41-F8B25ED9793F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +30,14 @@ Global
 		{90BBA7EE-674B-417F-9886-EC9B46444847}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{90BBA7EE-674B-417F-9886-EC9B46444847}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{90BBA7EE-674B-417F-9886-EC9B46444847}.Release|Any CPU.Build.0 = Release|Any CPU
+		{20AA3B39-9107-47D8-842E-99B486806534}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{20AA3B39-9107-47D8-842E-99B486806534}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{20AA3B39-9107-47D8-842E-99B486806534}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{20AA3B39-9107-47D8-842E-99B486806534}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9B37692B-383C-4BCE-A648-FF8050CC6EC0} = {738391C4-A4D4-48DF-B693-8B215AE6B5E7}
+		{8A1C7E8D-5EC9-4CEC-AC97-5AEE56194E4A} = {738391C4-A4D4-48DF-B693-8B215AE6B5E7}
+		{20AA3B39-9107-47D8-842E-99B486806534} = {2C4CCFC6-51F7-4505-AC41-F8B25ED9793F}
 	EndGlobalSection
 EndGlobal
