@@ -11,12 +11,15 @@ using TinyToolBox.Agents.Reasoning;
 using TinyToolBox.Agents.Shared.Http;
 
 IHost? host = default;
-string[] models = [
-    "phi4",
-    "anthropic.claude-3-5-sonnet-20241022-v2:0"
-];
 try
 {
+    const string localModel = "phi4";
+    const string bedrockModel = "anthropic.claude-3-5-sonnet-20241022-v2:0";
+    string[] models = [
+        localModel,
+        bedrockModel
+    ];
+    
     host = Host.CreateDefaultBuilder(args)
         .ConfigureAppConfiguration((builderContext, builder) =>
         {
@@ -32,17 +35,16 @@ try
             services.AddTransient<TraceHttpHandler>();
 
             // Ollama
-            
             services
-                .AddHttpClient(models[0])
+                .AddHttpClient(localModel)
                 .AddHttpMessageHandler<TraceHttpHandler>()
                 .ConfigureHttpClient(client => { client.BaseAddress = new Uri("http://localhost:11434"); });
-            services.AddKeyedTransient<IChatClient>(models[0],
+            services.AddKeyedTransient<IChatClient>(localModel,
                 (provider, _) =>
                 {
                     var factory = provider.GetRequiredService<IHttpClientFactory>();
-                    var httpClient = factory.CreateClient(nameof(OllamaApiClient));
-                    var ollamaApiClient = new OllamaApiClient(httpClient, models[0]);
+                    var httpClient = factory.CreateClient(localModel);
+                    var ollamaApiClient = new OllamaApiClient(httpClient, localModel);
                     return ollamaApiClient;
                 });
 
@@ -53,11 +55,11 @@ try
                     .Get<BedrockConfiguration>()
                 ?? throw new InvalidOperationException($"AWS {nameof(BedrockConfiguration)} configuration required");
             services
-                .AddHttpClient(models[1])
+                .AddHttpClient(bedrockModel)
                 .AddHttpMessageHandler<TraceHttpHandler>();
 
-            services.AddKeyedTransient<IChatClient>(models[1],
-                (provider, key) =>
+            services.AddKeyedTransient<IChatClient>(bedrockModel,
+                (provider, _) =>
                 {
                     var credentials = new SessionAWSCredentials(
                         bedrockConfig.KeyId,
@@ -70,7 +72,7 @@ try
                     var runtimeConfig = new AmazonBedrockRuntimeConfig
                     {
                         RegionEndpoint = regionEndpoint,
-                        HttpClientFactory = new BedrockHttpClientFactory(factory, key?.ToString()!)
+                        HttpClientFactory = new BedrockHttpClientFactory(factory, bedrockModel)
                     };
 
                     var client = new AmazonBedrockRuntimeClient(credentials, runtimeConfig);
@@ -80,29 +82,25 @@ try
             foreach (var model in models)
             {
                 // Semantic Kernel
-                services.AddKeyedTransient<IKernelBuilder>(model, (provider, key) =>
+                services.AddKeyedTransient<IKernelBuilder>(model, (provider, _) =>
                 {
                     var builder = Kernel.CreateBuilder();
 
-                    var keyId = key?.ToString()!;
-                    
-                    var chatClient = provider.GetRequiredKeyedService<IChatClient>(keyId);
-                    builder.Services.AddKeyedChatClient(keyId, chatClient);
+                    var chatClient = provider.GetRequiredKeyedService<IChatClient>(model);
+                    builder.Services.AddKeyedChatClient(model, chatClient);
                     builder.Services.AddSingleton(provider.GetRequiredService<ILoggerFactory>());
 
                     return builder;
                 });
                 
                 // ReAct loop
-                services.AddKeyedTransient<ReActLoop>(model, (provider, key) =>
+                services.AddKeyedTransient<ReActLoop>(model, (provider, _) =>
                 {
-                    var keyId = key?.ToString()!;
-                    
-                    var builder = provider.GetRequiredKeyedService<IKernelBuilder>(keyId);
+                    var builder = provider.GetRequiredKeyedService<IKernelBuilder>(model);
                     var factory = provider.GetRequiredService<ILoggerFactory>();
 
                     var kernel = builder.Build();
-                    return new ReActLoop(kernel, keyId, 10, factory.CreateLogger<ReActLoop>());
+                    return new ReActLoop(kernel, model, 10, factory.CreateLogger<ReActLoop>());
                 });
             }
         })
@@ -113,7 +111,7 @@ try
     var lifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
 
     await using var scope = host.Services.CreateAsyncScope();
-    var loop = scope.ServiceProvider.GetRequiredKeyedService<ReActLoop>(models[1]); // Bedrock
+    var loop = scope.ServiceProvider.GetRequiredKeyedService<ReActLoop>(localModel); // Bedrock
     var tools = MathFunctions.Create();
     var result = await loop.Execute("How many seconds are in 1:23:45", tools, lifetime.ApplicationStopping);
     Console.WriteLine(result.Success ? $"Final Answer: {result.FinalAnswer}" : $"Error: {result.Error}");
