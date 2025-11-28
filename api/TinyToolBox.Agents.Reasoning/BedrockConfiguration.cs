@@ -12,8 +12,6 @@ public sealed class BedrockConfiguration
 
     public required string Token { get; init; }
 
-    public required string ModelId { get; init; }
-
     public RegionEndpoint RequireRegionEndpoint()
     {
         return RegionEndpoint.EnumerableAllRegions
