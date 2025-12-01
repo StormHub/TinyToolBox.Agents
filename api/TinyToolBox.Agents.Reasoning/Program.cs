@@ -121,7 +121,12 @@ try
 
     while (!context.Completed())
     {
-        var step = await context.Next(promptExecutionSettings, lifetime.ApplicationStopping);
+        await context.Next(promptExecutionSettings, lifetime.ApplicationStopping);
+    }
+
+    foreach (var step in context.Steps)
+    {
+        Console.WriteLine($"{step.Thought} {step.Observation}");
         if (step.HasFinalAnswer()) Console.WriteLine($"Final Answer: {step.FinalAnswer}");
     }
 
