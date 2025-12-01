@@ -1,6 +1,6 @@
 using Amazon.Runtime;
 
-namespace TinyToolBox.Agents.Reasoning;
+namespace TinyToolBox.Agents.ReasoningApp;
 
 internal sealed class BedrockHttpClientFactory(IHttpClientFactory httpClientFactory, string name) : HttpClientFactory
 {

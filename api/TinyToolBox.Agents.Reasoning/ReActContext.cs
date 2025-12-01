@@ -7,7 +7,7 @@ using TinyToolBox.Agents.Reasoning.Prompts;
 
 namespace TinyToolBox.Agents.Reasoning;
 
-internal sealed class ReActContext
+public sealed class ReActContext
 {
     private static readonly Regex finalAnswerPattern = new(@"Final Answer:\s*(?:```([\s\S]*?)```|([^\n]+))");
     private static readonly Regex actionPattern = new(@"Action:\s*```(?:json)?([\s\S]*?)```");

@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using Microsoft.SemanticKernel;
 
-namespace TinyToolBox.Agents.Reasoning;
+namespace TinyToolBox.Agents.ReasoningApp;
 
 internal class MathFunctions
 {

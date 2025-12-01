@@ -4,7 +4,7 @@ using Microsoft.SemanticKernel;
 
 namespace TinyToolBox.Agents.Reasoning;
 
-internal sealed class ReActStep
+public sealed class ReActStep
 {
     public string? Thought { get; init; }
 
@@ -24,7 +24,7 @@ internal sealed class ReActStep
             : throw new InvalidOperationException($"Action does not exit on step");
 }
 
-internal class StepAction
+public sealed class StepAction
 {
     [JsonPropertyName("action")] 
     public required string Action { get; init; }

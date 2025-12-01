@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using OllamaSharp;
 using TinyToolBox.Agents.Reasoning;
+using TinyToolBox.Agents.ReasoningApp;
 using TinyToolBox.Agents.Shared.Http;
 
 IHost? host = default;

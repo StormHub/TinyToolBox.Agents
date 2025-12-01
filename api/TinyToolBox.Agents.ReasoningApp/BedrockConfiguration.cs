@@ -1,6 +1,6 @@
 using Amazon;
 
-namespace TinyToolBox.Agents.Reasoning;
+namespace TinyToolBox.Agents.ReasoningApp;
 
 public sealed class BedrockConfiguration
 {
