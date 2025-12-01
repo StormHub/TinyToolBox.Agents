@@ -94,9 +94,11 @@ internal sealed class ReActContext
 
         // Looking for final answer first
         var finalAnswerMatch = finalAnswerPattern.Match(input);
-        string? finalAnswer = default;
-        if (finalAnswerMatch.Success) finalAnswer = finalAnswerMatch.Groups[2].Value.Trim();
+        var finalAnswer = finalAnswerMatch.Success 
+            ? finalAnswerMatch.Groups[2].Value.Trim() 
+            : default;
 
+        // Then looking for action
         var actionMatch = actionPattern.Match(input);
         if (actionMatch.Success)
         {
