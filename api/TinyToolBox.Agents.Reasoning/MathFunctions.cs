@@ -1,22 +1,11 @@
 using System.ComponentModel;
-using System.Text.Json;
-using Microsoft.Extensions.AI;
+using Microsoft.SemanticKernel;
 
 namespace TinyToolBox.Agents.Reasoning;
 
-internal static class MathFunctions
+internal class MathFunctions
 {
-    public static IEnumerable<AIFunction> Create(JsonSerializerOptions? serializerOptions = null)
-    {
-        var options = new AIFunctionFactoryOptions
-        {
-            SerializerOptions = serializerOptions ?? AIJsonUtilities.DefaultOptions
-        };
-
-        yield return AIFunctionFactory.Create(Add, options);
-        yield return AIFunctionFactory.Create(Multiply, options);
-    }
-
+    [KernelFunction]
     [Description("Add two numbers")]
     public static double Add(
         [Description("The first number to add")]
@@ -28,7 +17,8 @@ internal static class MathFunctions
         return number1 + number2;
     }
 
-    [Description("Multiply two numbers.")]
+    [KernelFunction]
+    [Description("Multiply two numbers")]
     public static double Multiply(
         [Description("The first number to multiply")]
         double number1,

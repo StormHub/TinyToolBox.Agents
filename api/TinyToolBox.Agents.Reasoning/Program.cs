@@ -15,11 +15,12 @@ try
 {
     const string localModel = "phi4";
     const string bedrockModel = "anthropic.claude-3-5-sonnet-20241022-v2:0";
-    string[] models = [
+    string[] models =
+    [
         localModel,
         bedrockModel
     ];
-    
+
     host = Host.CreateDefaultBuilder(args)
         .ConfigureAppConfiguration((builderContext, builder) =>
         {
@@ -49,7 +50,7 @@ try
                 });
 
             // Bedrock
-            var bedrockConfig = 
+            var bedrockConfig =
                 builderContext.Configuration
                     .GetSection(nameof(BedrockConfiguration))
                     .Get<BedrockConfiguration>()
@@ -79,30 +80,21 @@ try
                     return client.AsIChatClient();
                 });
 
-            foreach (var model in models)
+            // Semantic Kernel
+            services.AddTransient<IKernelBuilder>(provider =>
             {
-                // Semantic Kernel
-                services.AddKeyedTransient<IKernelBuilder>(model, (provider, _) =>
+                var builder = Kernel.CreateBuilder();
+                foreach (var model in models)
                 {
-                    var builder = Kernel.CreateBuilder();
-
                     var chatClient = provider.GetRequiredKeyedService<IChatClient>(model);
                     builder.Services.AddKeyedChatClient(model, chatClient);
-                    builder.Services.AddSingleton(provider.GetRequiredService<ILoggerFactory>());
+                }
 
-                    return builder;
-                });
-                
-                // ReAct loop
-                services.AddKeyedTransient<ReActLoop>(model, (provider, _) =>
-                {
-                    var builder = provider.GetRequiredKeyedService<IKernelBuilder>(model);
-                    var factory = provider.GetRequiredService<ILoggerFactory>();
+                builder.Services.AddSingleton(provider.GetRequiredService<ILoggerFactory>());
+                builder.Plugins.AddFromType<MathFunctions>();
 
-                    var kernel = builder.Build();
-                    return new ReActLoop(kernel, model, 10, factory.CreateLogger<ReActLoop>());
-                });
-            }
+                return builder;
+            });
         })
         .UseConsoleLifetime()
         .Build();
@@ -111,12 +103,28 @@ try
     var lifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
 
     await using var scope = host.Services.CreateAsyncScope();
-    var loop = scope.ServiceProvider.GetRequiredKeyedService<ReActLoop>(localModel); // Bedrock
-    var tools = MathFunctions.Create();
-    var result = await loop.Execute("How many seconds are in 1:23:45", tools, lifetime.ApplicationStopping);
-    Console.WriteLine(result.Success ? $"Final Answer: {result.FinalAnswer}" : $"Error: {result.Error}");
-    lifetime.StopApplication();
+    var builder = scope.ServiceProvider.GetRequiredService<IKernelBuilder>();
+    var kernel = builder.Build();
 
+    var promptExecutionSettings = new PromptExecutionSettings
+    {
+        ModelId = localModel,
+        ExtensionData = new Dictionary<string, object>
+        {
+            ["temperature"] = 0
+        }
+    };
+    var context = new ReActContext(
+        "What is 12 multiplied by 15, plus 7?",
+        kernel);
+
+    while (!context.Completed())
+    {
+        var step = await context.Next(promptExecutionSettings, lifetime.ApplicationStopping);
+        if (step.HasFinalAnswer()) Console.WriteLine($"Final Answer: {step.FinalAnswer}");
+    }
+
+    lifetime.StopApplication();
     await host.WaitForShutdownAsync(lifetime.ApplicationStopping);
 }
 catch (Exception ex)
