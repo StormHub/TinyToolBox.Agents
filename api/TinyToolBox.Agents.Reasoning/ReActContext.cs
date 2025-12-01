@@ -35,10 +35,9 @@ internal sealed class ReActContext
         _actions = string.Join('\n', tools.Select(x => $"{x.description}, args {x.arguments}"));
     }
 
-    public bool Completed()
-    {
-        return _steps.LastOrDefault()?.HasFinalAnswer() ?? false;
-    }
+    public bool Completed() => _steps.LastOrDefault()?.HasFinalAnswer() ?? false;
+    
+    public IReadOnlyCollection<ReActStep> Steps => _steps.AsReadOnly();
 
     public async Task<ReActStep> Next(
         PromptExecutionSettings promptExecutionSettings,
@@ -60,8 +59,9 @@ internal sealed class ReActContext
         if (!step.HasFinalAnswer())
         {
             Debug.Assert(step.Action != null, "Step action should not be null if final answer is not present.");
+            
             _logger.LogInformation("Invoking action: {Action}", step.Action);
-            var actionResult = await step.Action.Invoke(_kernel, cancellationToken);
+            var actionResult = await step.InvokeAction(_kernel, cancellationToken);
             step.Observation = actionResult.ToString();
         }
 

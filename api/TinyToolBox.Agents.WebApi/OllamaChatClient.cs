@@ -32,10 +32,8 @@ internal sealed class OllamaChatClient(OllamaApiClient ollamaApiClient) : IChatC
         }
     }
 
-    public object? GetService(Type serviceType, object? serviceKey = null)
-    {
-        return ((IChatClient)ollamaApiClient).GetService(serviceType, serviceKey);
-    }
+    public object? GetService(Type serviceType, object? serviceKey = null) => 
+        ((IChatClient)ollamaApiClient).GetService(serviceType, serviceKey);
 
     public void Dispose()
     {

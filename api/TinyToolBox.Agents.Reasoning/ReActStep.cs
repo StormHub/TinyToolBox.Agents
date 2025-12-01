@@ -16,17 +16,21 @@ internal sealed class ReActStep
 
     public required string OriginalResponse { get; init; }
 
-    public bool HasFinalAnswer()
-    {
-        return !string.IsNullOrEmpty(FinalAnswer);
-    }
+    public bool HasFinalAnswer() => !string.IsNullOrEmpty(FinalAnswer);
+    
+    internal Task<FunctionResult> InvokeAction(Kernel kernel, CancellationToken cancellationToken = default) => 
+        Action is not null 
+            ? Action.Invoke(kernel, cancellationToken) 
+            : throw new InvalidOperationException($"Action does not exit on step");
 }
 
-internal sealed class StepAction
+internal class StepAction
 {
-    [JsonPropertyName("action")] public required string Action { get; init; }
+    [JsonPropertyName("action")] 
+    public required string Action { get; init; }
 
-    [JsonPropertyName("action_input")] public Dictionary<string, object?>? ActionInput { get; init; }
+    [JsonPropertyName("action_input")] 
+    public Dictionary<string, object?>? ActionInput { get; init; }
 
     internal async Task<FunctionResult> Invoke(Kernel kernel, CancellationToken cancellationToken = default)
     {
