@@ -11,12 +11,14 @@ internal sealed class ReActContext
 {
     private static readonly Regex finalAnswerPattern = new(@"Final Answer:\s*(?:```([\s\S]*?)```|([^\n]+))");
     private static readonly Regex actionPattern = new(@"Action:\s*```(?:json)?([\s\S]*?)```");
+    private readonly string _actions;
+
     private readonly string _input;
     private readonly Kernel _kernel;
     private readonly KernelFunction _kernelFunction;
     private readonly ILogger _logger;
     private readonly List<ReActStep> _steps;
-    private readonly List<(string description, string arguments)> _tools;
+    private readonly string _tools;
 
     public ReActContext(string input, Kernel kernel, params List<ReActStep> stepsTaken)
     {
@@ -27,10 +29,16 @@ internal sealed class ReActContext
 
         var templateConfig = Templates.LoadConfiguration();
         _kernelFunction = kernel.CreateFunctionFromPrompt(templateConfig);
-        _tools = Format(kernel.Plugins).ToList();
+
+        var tools = Format(kernel.Plugins).ToList();
+        _tools = string.Join('\n', tools.Select(x => x.description));
+        _actions = string.Join('\n', tools.Select(x => $"{x.description}, args {x.arguments}"));
     }
 
-    public bool Completed() => _steps.LastOrDefault()?.HasFinalAnswer() ?? false;
+    public bool Completed()
+    {
+        return _steps.LastOrDefault()?.HasFinalAnswer() ?? false;
+    }
 
     public async Task<ReActStep> Next(
         PromptExecutionSettings promptExecutionSettings,
@@ -39,19 +47,11 @@ internal sealed class ReActContext
         var step = _steps.LastOrDefault();
         if (step?.HasFinalAnswer() ?? false) return step;
 
-        // Prevent the model from generating answers directly
-        if (promptExecutionSettings.ExtensionData is null
-            || !promptExecutionSettings.ExtensionData.ContainsKey("stop_sequences"))
-        {
-            promptExecutionSettings.ExtensionData ??= new Dictionary<string, object>();
-            promptExecutionSettings.ExtensionData["stop_sequences"] = new[] { "Observation:" };
-        }
-
         var arguments = new KernelArguments(promptExecutionSettings)
         {
             ["input"] = _input,
-            ["tools"] = string.Join('\n', _tools.Select(x => x.description)),
-            ["tool_actions"] = string.Join('\n', _tools.Select(x => $"{x.description}, args {x.arguments}")),
+            ["tools"] = _tools,
+            ["tool_actions"] = _actions,
             ["agent_scratchpad"] = BuildScratchpad()
         };
 
@@ -81,7 +81,7 @@ internal sealed class ReActContext
             var action = step.Action?.Format() ?? string.Empty;
             var observation = $"Observation: {step.Observation}";
             var content = $"{thought}\n{action}\n{observation}\n";
-            
+
             buffer.Insert(0, content);
         }
 
@@ -94,8 +94,8 @@ internal sealed class ReActContext
 
         // Looking for final answer first
         var finalAnswerMatch = finalAnswerPattern.Match(input);
-        var finalAnswer = finalAnswerMatch.Success 
-            ? finalAnswerMatch.Groups[2].Value.Trim() 
+        var finalAnswer = finalAnswerMatch.Success
+            ? finalAnswerMatch.Groups[2].Value.Trim()
             : default;
 
         // Then looking for action

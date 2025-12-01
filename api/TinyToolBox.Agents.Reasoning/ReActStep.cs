@@ -16,7 +16,10 @@ internal sealed class ReActStep
 
     public required string OriginalResponse { get; init; }
 
-    public bool HasFinalAnswer() => !string.IsNullOrEmpty(FinalAnswer);
+    public bool HasFinalAnswer()
+    {
+        return !string.IsNullOrEmpty(FinalAnswer);
+    }
 }
 
 internal sealed class StepAction

@@ -111,7 +111,8 @@ try
         ModelId = localModel,
         ExtensionData = new Dictionary<string, object>
         {
-            ["temperature"] = 0
+            ["temperature"] = 0,
+            ["stop_sequences"] = new[] { "Observation:" } // Prevent the model from generating answers directly
         }
     };
     var context = new ReActContext(
