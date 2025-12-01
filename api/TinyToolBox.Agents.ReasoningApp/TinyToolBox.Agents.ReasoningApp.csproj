@@ -15,13 +15,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Remove="Prompts/**/*"/>
-        <EmbeddedResource Include="Prompts/**/*">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </EmbeddedResource>
-    </ItemGroup>
-
-    <ItemGroup>
         <PackageReference Include="AWSSDK.Extensions.Bedrock.MEAI" Version="4.0.4.9"/>
         <PackageReference Include="Microsoft.Extensions.AI" Version="10.0.1"/>
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0"/>
