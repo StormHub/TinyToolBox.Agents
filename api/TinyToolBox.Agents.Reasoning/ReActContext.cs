@@ -79,7 +79,10 @@ internal sealed class ReActContext
             var step = _steps[i];
             var thought = (i > 0 ? "Thought:" : string.Empty) + $" {step.Thought}";
             var action = step.Action?.Format() ?? string.Empty;
-            buffer.Insert(0, $"{thought} \n {action}\n Observation: {step.Observation}\n");
+            var observation = $"Observation: {step.Observation}";
+            var content = $"{thought}\n{action}\n{observation}\n";
+            
+            buffer.Insert(0, content);
         }
 
         return buffer.ToString();
