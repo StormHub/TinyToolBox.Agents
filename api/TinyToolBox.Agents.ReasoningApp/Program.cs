@@ -1,5 +1,6 @@
 ﻿using Amazon.BedrockRuntime;
 using Amazon.Runtime;
+using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -105,8 +106,46 @@ try
 
     await using var scope = host.Services.CreateAsyncScope();
     var builder = scope.ServiceProvider.GetRequiredService<IKernelBuilder>();
-    var kernel = builder.Build();
 
+    var startExecutor = new ChatForwardingExecutor("Start",
+        new ChatForwardingExecutorOptions
+        {
+            StringMessageChatRole = ChatRole.User
+        });
+    var promptExecutionSettings = new PromptExecutionSettings
+    {
+        ModelId = "phi4",
+        ExtensionData = new Dictionary<string, object>
+        {
+            ["temperature"] = 0,
+            ["stop_sequences"] = new[] { "Observation:" } // Prevent the model from generating answers directly
+        }
+    };
+    var reactExecutor = new ReActExecutor("ReAct", builder, promptExecutionSettings);
+    var workflow = new WorkflowBuilder(startExecutor)
+        .AddEdge(startExecutor, reactExecutor)
+        .WithOutputFrom(reactExecutor)
+        .Build();
+
+    await using var run = await InProcessExecution.StreamAsync(workflow,
+        "What is 12 multiplied by 15, plus 7?",
+        cancellationToken: lifetime.ApplicationStopping);
+    await foreach (var workFlowEvent in run.WatchStreamAsync(lifetime.ApplicationStopping))
+    {
+        switch (workFlowEvent)
+        {
+            case StepCompleted stepCompleted:
+                Console.WriteLine($"{stepCompleted.Data}");
+                break;
+
+            case WorkflowOutputEvent outputEvent:
+                Console.WriteLine($"{outputEvent}");
+                break;
+        }
+    }
+
+    /*
+    var kernel = builder.Build();
     var promptExecutionSettings = new PromptExecutionSettings
     {
         ModelId = localModel,
@@ -130,6 +169,7 @@ try
         Console.WriteLine($"{step.Thought} {step.Observation}");
         if (step.HasFinalAnswer()) Console.WriteLine($"Final Answer: {step.FinalAnswer}");
     }
+    */
 
     lifetime.StopApplication();
     await host.WaitForShutdownAsync(lifetime.ApplicationStopping);

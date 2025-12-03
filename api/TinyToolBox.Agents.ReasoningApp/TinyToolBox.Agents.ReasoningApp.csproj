@@ -24,7 +24,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\TinyToolBox.Agents.Reasoning\TinyToolBox.Agents.Reasoning.csproj" />
+        <ProjectReference Include="..\TinyToolBox.Agents.Reasoning\TinyToolBox.Agents.Reasoning.csproj"/>
         <ProjectReference Include="..\TinyToolBox.Agents.Shared\TinyToolBox.Agents.Shared.csproj"/>
     </ItemGroup>
 
