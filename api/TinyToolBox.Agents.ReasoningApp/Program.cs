@@ -106,13 +106,13 @@ try
     var lifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
     await using var scope = host.Services.CreateAsyncScope();
 
-    var chatClient = scope.ServiceProvider.GetRequiredKeyedService<IChatClient>(bedrockModel);
+    var chatClient = scope.ServiceProvider.GetRequiredKeyedService<IChatClient>(localModel);
     var loop = new ReActLoop(
         input: "What is 12 multiplied by 15, plus 7?",
         chatClient, 
         new ChatOptions
         {
-            ModelId = bedrockModel,
+            ModelId = localModel,
             Temperature = 0,
             StopSequences = ["Observation:"],
             Tools = [ 

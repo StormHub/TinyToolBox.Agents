@@ -11,7 +11,7 @@ internal sealed class Templates
         using var reader = new StreamReader(stream);
         return reader.ReadToEnd();
     }
-    
+
     internal static PromptTemplateConfig LoadConfiguration(string name = "template.txt")
     {
         var content = LoadContent(name);
