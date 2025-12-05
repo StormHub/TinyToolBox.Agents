@@ -1,6 +1,5 @@
 using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
-using Microsoft.SemanticKernel;
 
 namespace TinyToolBox.Agents.Reasoning;
 
@@ -12,19 +11,18 @@ public sealed class StepCompleted(ReActStep step) : WorkflowEvent(step)
 
 public sealed class ReActExecutor : Executor<ChatMessage>
 {
-    private readonly IKernelBuilder _builder;
-    private readonly PromptExecutionSettings _promptExecutionSettings;
+    private readonly IChatClient _chatClient;
+    private readonly ChatOptions _chatOptions;
 
     public ReActExecutor(
-        string id,
-        IKernelBuilder builder,
-        PromptExecutionSettings promptExecutionSettings,
+        IChatClient chatClient,
+        ChatOptions chatOptions,
         ExecutorOptions? options = null,
         bool declareCrossRunShareable = false)
-        : base(id, options, declareCrossRunShareable)
+        : base("ReAct", options, declareCrossRunShareable)
     {
-        _builder = builder;
-        _promptExecutionSettings = promptExecutionSettings;
+        _chatClient = chatClient;
+        _chatOptions = chatOptions;
     }
 
     public override async ValueTask HandleAsync(
@@ -32,14 +30,13 @@ public sealed class ReActExecutor : Executor<ChatMessage>
         IWorkflowContext context,
         CancellationToken cancellationToken = default)
     {
-        var kernel = _builder.Build();
-        var reActContext = new ReActContext(message.Text, kernel);
-        while (!reActContext.Completed())
+        var reActLoop = new ReActLoop(message.Text, _chatClient, _chatOptions);
+        while (!reActLoop.Completed())
         {
-            var step = await reActContext.Next(_promptExecutionSettings, cancellationToken);
+            var step = await reActLoop.Next(cancellationToken);
             await context.AddEventAsync(new StepCompleted(step), cancellationToken);
         }
 
-        await context.YieldOutputAsync(reActContext.Steps, cancellationToken);
+        await context.YieldOutputAsync(reActLoop.Steps, cancellationToken);
     }
 }

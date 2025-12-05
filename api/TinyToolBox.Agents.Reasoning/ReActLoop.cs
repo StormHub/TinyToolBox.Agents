@@ -51,6 +51,8 @@ public sealed class ReActLoop
     }
 
     public bool Completed() => _steps.LastOrDefault()?.HasFinalAnswer() ?? false;
+    
+    public IReadOnlyCollection<ReActStep> Steps => _steps.AsReadOnly();
 
     public async Task<ReActStep> Next(CancellationToken cancellationToken = default)
     {

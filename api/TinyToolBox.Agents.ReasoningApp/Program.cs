@@ -1,7 +1,6 @@
 ﻿using Amazon.BedrockRuntime;
 using Amazon.Runtime;
-// using Microsoft.Agents.AI;
-// using Microsoft.Agents.AI.Workflows;
+using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -106,6 +105,7 @@ try
     var lifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
     await using var scope = host.Services.CreateAsyncScope();
 
+    /*
     var chatClient = scope.ServiceProvider.GetRequiredKeyedService<IChatClient>(localModel);
     var loop = new ReActLoop(
         input: "What is 12 multiplied by 15, plus 7?",
@@ -132,6 +132,7 @@ try
     {
         Console.WriteLine(currentStep.FinalAnswer);
     }
+    */
 
     /*
     var builder = scope.ServiceProvider.GetRequiredService<IKernelBuilder>();
@@ -162,13 +163,25 @@ try
     }
     */
 
-    /*
+    var chatClient = scope.ServiceProvider.GetRequiredKeyedService<IChatClient>(bedrockModel);
+    var chatOptions = new ChatOptions
+    {
+        ModelId = bedrockModel,
+        Temperature = 0,
+        StopSequences = ["Observation:"],
+        Tools =
+        [
+            AIFunctionFactory.Create(MathFunctions.Add),
+            AIFunctionFactory.Create(MathFunctions.Multiply)
+        ],
+    };
+
     var startExecutor = new ChatForwardingExecutor("Start",
         new ChatForwardingExecutorOptions
         {
             StringMessageChatRole = ChatRole.User
         });
-    var reactExecutor = new ReActExecutor("ReAct", builder, promptExecutionSettings);
+    var reactExecutor = new ReActExecutor(chatClient, chatOptions);
     var workflow = new WorkflowBuilder(startExecutor)
         .AddEdge(startExecutor, reactExecutor)
         .WithOutputFrom(reactExecutor)
@@ -186,11 +199,14 @@ try
                 break;
 
             case WorkflowOutputEvent outputEvent:
-                Console.WriteLine($"{outputEvent}");
+                var steps = outputEvent.As<IReadOnlyCollection<ReActStep>>();
+                if (steps is { Count: > 0 })
+                {
+                    Console.WriteLine($"{steps.Last().FinalAnswer}");
+                }
                 break;
         }
     }
-    */
 
     lifetime.StopApplication();
     await host.WaitForShutdownAsync(lifetime.ApplicationStopping);
