@@ -120,7 +120,7 @@ try
                 AIFunctionFactory.Create(MathFunctions.Multiply)
             ],
         },  
-        scope.ServiceProvider.GetRequiredService<ILoggerFactory>());
+        loggerFactory: scope.ServiceProvider.GetRequiredService<ILoggerFactory>());
 
     ReActStep? currentStep = default;
     while (!loop.Completed())

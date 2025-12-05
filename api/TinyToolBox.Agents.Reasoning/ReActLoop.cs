@@ -20,7 +20,7 @@ public sealed class ReActLoop
     private readonly List<ReActStep> _steps;
     private readonly ILogger _logger;
 
-    public ReActLoop(string input, IChatClient chatClient, ChatOptions chatOptions, ILoggerFactory? loggerFactory = null)
+    public ReActLoop(string input, IChatClient chatClient, ChatOptions chatOptions, ReActStep[]? steps = null, ILoggerFactory? loggerFactory = null)
     {
         var tools = chatOptions.Tools?.OfType<AIFunction>().ToArray();
         if (tools is null || tools.Length == 0)
@@ -44,6 +44,10 @@ public sealed class ReActLoop
             ("tool_actions", string.Join('\n', list.Select(x => $"{x.description}, args: {x.arguments}"))),
         ];
         _steps = [];
+        if (steps is not null)
+        {
+            _steps.AddRange(steps);
+        }
     }
 
     public bool Completed() => _steps.LastOrDefault()?.HasFinalAnswer() ?? false;
