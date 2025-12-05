@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
@@ -26,19 +25,16 @@ public sealed class ReActContext
         _kernel = kernel;
         _steps = [..stepsTaken];
         _logger = kernel.LoggerFactory.CreateLogger<ReActContext>();
-
+        
         var templateConfig = Templates.LoadConfiguration();
         _kernelFunction = kernel.CreateFunctionFromPrompt(templateConfig);
-
+        
         var tools = Format(kernel.Plugins).ToList();
         _tools = string.Join('\n', tools.Select(x => x.description));
         _actions = string.Join('\n', tools.Select(x => $"{x.description}, args {x.arguments}"));
     }
 
-    public bool Completed()
-    {
-        return _steps.LastOrDefault()?.HasFinalAnswer() ?? false;
-    }
+    public bool Completed() => _steps.LastOrDefault()?.HasFinalAnswer() ?? false;
 
     public IReadOnlyCollection<ReActStep> Steps => _steps.AsReadOnly();
 
@@ -61,15 +57,33 @@ public sealed class ReActContext
         step = Parse(functionResult);
         if (!step.HasFinalAnswer())
         {
-            Debug.Assert(step.Action != null, "Step action should not be null if final answer is not present.");
-
-            _logger.LogInformation("Invoking action: {Action}", step.Action);
-            var actionResult = await step.InvokeAction(_kernel, cancellationToken);
+            var actionResult = await InvokeAction(step, cancellationToken);
             step.Observation = actionResult.ToString();
         }
 
         _steps.Add(step);
         return step;
+    }
+    
+    private async Task<FunctionResult> InvokeAction(ReActStep step, CancellationToken cancellationToken = default)
+    {
+        var stepAction = step.Action ?? throw new InvalidOperationException("Action does not exit on step");
+        
+        _logger.LogInformation("Invoking action: {Action}", stepAction.Action);
+        
+        var metadata = _kernel.Plugins
+                           .GetFunctionsMetadata()
+                           .FirstOrDefault(x =>
+                               string.Equals(stepAction.Action, $"{x.PluginName}.{x.Name}", StringComparison.OrdinalIgnoreCase))
+                       ?? throw new InvalidOperationException($"Action '{stepAction.Action}' not found.");
+
+        var function = _kernel.Plugins.GetFunction(metadata.PluginName, metadata.Name)
+                       ?? throw new InvalidOperationException(
+                           $"Action plugin '{metadata.PluginName}.{metadata.Name}' not found.");
+
+        var arguments = stepAction.ActionInput is not null ? new KernelArguments(stepAction.ActionInput) : default;
+        var functionResult = await function.InvokeAsync(_kernel, arguments, cancellationToken);
+        return functionResult;
     }
 
     private string BuildScratchpad()

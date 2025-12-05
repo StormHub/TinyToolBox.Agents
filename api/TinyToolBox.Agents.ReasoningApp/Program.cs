@@ -1,6 +1,7 @@
 ﻿using Amazon.BedrockRuntime;
 using Amazon.Runtime;
-using Microsoft.Agents.AI.Workflows;
+// using Microsoft.Agents.AI;
+// using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -103,24 +104,70 @@ try
 
     await host.StartAsync();
     var lifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
-
     await using var scope = host.Services.CreateAsyncScope();
-    var builder = scope.ServiceProvider.GetRequiredService<IKernelBuilder>();
 
-    var startExecutor = new ChatForwardingExecutor("Start",
-        new ChatForwardingExecutorOptions
+    var chatClient = scope.ServiceProvider.GetRequiredKeyedService<IChatClient>(bedrockModel);
+    var loop = new ReActLoop(
+        input: "What is 12 multiplied by 15, plus 7?",
+        chatClient, 
+        new ChatOptions
         {
-            StringMessageChatRole = ChatRole.User
-        });
+            ModelId = bedrockModel,
+            Temperature = 0,
+            StopSequences = ["Observation:"],
+            Tools = [ 
+                AIFunctionFactory.Create(MathFunctions.Add),
+                AIFunctionFactory.Create(MathFunctions.Multiply)
+            ],
+        },  
+        scope.ServiceProvider.GetRequiredService<ILoggerFactory>());
+
+    ReActStep? currentStep = default;
+    while (!loop.Completed())
+    {
+        currentStep = await loop.Next(lifetime.ApplicationStopping);
+    }
+
+    if (currentStep is not null)
+    {
+        Console.WriteLine(currentStep.FinalAnswer);
+    }
+
+    /*
+    var builder = scope.ServiceProvider.GetRequiredService<IKernelBuilder>();
     var promptExecutionSettings = new PromptExecutionSettings
     {
-        ModelId = "phi4",
+        ModelId = localModel,
         ExtensionData = new Dictionary<string, object>
         {
             ["temperature"] = 0,
             ["stop_sequences"] = new[] { "Observation:" } // Prevent the model from generating answers directly
         }
     };
+    
+    var kernel = builder.Build();
+    var context = new ReActContext(
+        "What is 12 multiplied by 15, plus 7?",
+        kernel);
+
+    while (!context.Completed())
+    {
+        await context.Next(promptExecutionSettings, lifetime.ApplicationStopping);
+    }
+
+    foreach (var step in context.Steps)
+    {
+        Console.WriteLine($"{step.Thought} {step.Observation}");
+        if (step.HasFinalAnswer()) Console.WriteLine($"Final Answer: {step.FinalAnswer}");
+    }
+    */
+
+    /*
+    var startExecutor = new ChatForwardingExecutor("Start",
+        new ChatForwardingExecutorOptions
+        {
+            StringMessageChatRole = ChatRole.User
+        });
     var reactExecutor = new ReActExecutor("ReAct", builder, promptExecutionSettings);
     var workflow = new WorkflowBuilder(startExecutor)
         .AddEdge(startExecutor, reactExecutor)
@@ -135,39 +182,13 @@ try
         switch (workFlowEvent)
         {
             case StepCompleted stepCompleted:
-                Console.WriteLine($"{stepCompleted.Data}");
+                Console.WriteLine(stepCompleted.AsReActStep().Thought);
                 break;
 
             case WorkflowOutputEvent outputEvent:
                 Console.WriteLine($"{outputEvent}");
                 break;
         }
-    }
-
-    /*
-    var kernel = builder.Build();
-    var promptExecutionSettings = new PromptExecutionSettings
-    {
-        ModelId = localModel,
-        ExtensionData = new Dictionary<string, object>
-        {
-            ["temperature"] = 0,
-            ["stop_sequences"] = new[] { "Observation:" } // Prevent the model from generating answers directly
-        }
-    };
-    var context = new ReActContext(
-        "What is 12 multiplied by 15, plus 7?",
-        kernel);
-
-    while (!context.Completed())
-    {
-        await context.Next(promptExecutionSettings, lifetime.ApplicationStopping);
-    }
-
-    foreach (var step in context.Steps)
-    {
-        Console.WriteLine($"{step.Thought} {step.Observation}");
-        if (step.HasFinalAnswer()) Console.WriteLine($"Final Answer: {step.FinalAnswer}");
     }
     */
 

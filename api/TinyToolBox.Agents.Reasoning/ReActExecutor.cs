@@ -4,7 +4,10 @@ using Microsoft.SemanticKernel;
 
 namespace TinyToolBox.Agents.Reasoning;
 
-public sealed class StepCompleted(ReActStep step) : WorkflowEvent(step);
+public sealed class StepCompleted(ReActStep step) : WorkflowEvent(step)
+{
+    public ReActStep AsReActStep() => Data as ReActStep ?? throw new InvalidOperationException($"{nameof(ReActStep)} data required.");
+}
 
 public sealed class ReActExecutor : Executor<ChatMessage>
 {
