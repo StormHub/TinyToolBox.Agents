@@ -163,10 +163,10 @@ try
     }
     */
 
-    var chatClient = scope.ServiceProvider.GetRequiredKeyedService<IChatClient>(bedrockModel);
+    var chatClient = scope.ServiceProvider.GetRequiredKeyedService<IChatClient>(localModel);
     var chatOptions = new ChatOptions
     {
-        ModelId = bedrockModel,
+        ModelId = localModel,
         Temperature = 0,
         StopSequences = ["Observation:"],
         Tools =
