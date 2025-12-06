@@ -15,7 +15,7 @@ public sealed class ReActLoop
     private readonly AIFunction[] _tools;
 
     private readonly StringTemplate _template;
-    private readonly List<(string key, object value)> _arguments;
+    private readonly Dictionary<string, object> _arguments;
 
     private readonly List<ReActStep> _steps;
     private readonly ILogger _logger;
@@ -37,12 +37,12 @@ public sealed class ReActLoop
         _template = new StringTemplate(templateContent);
 
         var list = Format(tools).ToList();
-        _arguments =
-        [
-            ("input", input),
-            ("tools", string.Join('\n', list.Select(x => x.description))),
-            ("tool_actions", string.Join('\n', list.Select(x => $"{x.description}, args: {x.arguments}"))),
-        ];
+        _arguments = new()
+        {
+            [ "input" ] = input,
+            [ "tools" ] = string.Join('\n', list.Select(x => x.description)),
+            [ "tool_actions" ] = string.Join('\n', list.Select(x => $"{x.description}, args: {x.arguments}")),
+        };
         _steps = [];
         if (steps is not null)
         {
@@ -63,7 +63,10 @@ public sealed class ReActLoop
         }
 
         var scratchpad = BuildScratchpad();
-        var message = _template.Format([.._arguments, ("agent_scratchpad", scratchpad)]);
+        var message = _template.Format(new(_arguments)
+        {
+            ["agent_scratchpad"] = scratchpad
+        });
         var options = _chatOptions.Clone();
         options.Tools = default; // Manual tool handling in ReActLoop
 

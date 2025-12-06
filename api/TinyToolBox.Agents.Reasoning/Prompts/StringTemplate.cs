@@ -8,17 +8,15 @@ internal sealed class StringTemplate(string template, JsonSerializerOptions? jso
 {
     private const string TemplateVariablePattern = @"\{\{\$(.*?)\}\}";
 
-    public string Format(params (string key, object value)[] arguments)
+    public string Format(Dictionary<string, object> arguments)
     {
-        var dictionary = arguments.ToDictionary(x => x.key, x => x.value);
-
         return Regex.Replace(
             template,
             TemplateVariablePattern,
             match =>
             {
                 var key = match.Groups[1].Value;
-                if (dictionary.TryGetValue(key, out var value))
+                if (arguments.TryGetValue(key, out var value))
                 {
                     if (value is string stringValue)
                     {
