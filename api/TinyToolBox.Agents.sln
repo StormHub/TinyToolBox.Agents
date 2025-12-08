@@ -10,7 +10,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TinyToolBox.Agents.Reasonin
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AGUI", "AGUI", "{738391C4-A4D4-48DF-B693-8B215AE6B5E7}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ReAct", "ReAct", "{2C4CCFC6-51F7-4505-AC41-F8B25ED9793F}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Reasoning", "Reasoning", "{2C4CCFC6-51F7-4505-AC41-F8B25ED9793F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TinyToolBox.Agents.ReasoningApp", "TinyToolBox.Agents.ReasoningApp\TinyToolBox.Agents.ReasoningApp.csproj", "{8CF4BA70-A2D5-4EC5-95D6-3FF8C0DAB7B7}"
 EndProject
