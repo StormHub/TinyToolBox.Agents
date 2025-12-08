@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using TinyToolBox.Agents.Shared.Http;
-using TinyToolBox.Agents.Shared.Json;
 
 IHost? host = default;
 
@@ -23,8 +22,7 @@ try
             {
                 var factory = provider.GetRequiredService<IHttpClientFactory>();
                 var httpClient = factory.CreateClient("local");
-                var jsonSerializerOptions = new JsonSerializerOptions();
-                jsonSerializerOptions.Setup();
+                var jsonSerializerOptions = JsonSerializerOptions.Web;
 
                 var chatClient = new AGUIChatClient(
                     httpClient,

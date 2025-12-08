@@ -3,11 +3,13 @@ using Microsoft.Agents.AI.Hosting.AGUI.AspNetCore;
 using Microsoft.Extensions.AI;
 using OllamaSharp;
 using TinyToolBox.Agents.Shared.Http;
-using TinyToolBox.Agents.Shared.Json;
 using TinyToolBox.Agents.WebApi;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.ConfigureHttpJsonOptions(options => { options.SerializerOptions.Setup(); });
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.WriteIndented = true;
+});
 builder.Services.AddAGUI();
 
 // Http client
