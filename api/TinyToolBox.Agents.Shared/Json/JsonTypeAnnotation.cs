@@ -3,9 +3,9 @@ using Microsoft.Extensions.AI;
 
 namespace TinyToolBox.Agents.Shared.Json;
 
-public static class TypeAnnotation
+public static class JsonTypeAnnotation
 {
-    public static string Describe(Type type, JsonSerializerOptions? serializerOptions = null)
+    public static string Describe(this Type type, JsonSerializerOptions? serializerOptions = null)
     {
         var jsonSchema = AIJsonUtilities.CreateJsonSchema(type, serializerOptions: serializerOptions);
         var typeProperty = jsonSchema.GetProperty("type");
